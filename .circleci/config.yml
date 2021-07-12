@@ -152,9 +152,7 @@ jobs:
           command: |
            apk add --update tar gzip curl
            pip install awscli
-            ls ~/
-            ls ~/project
-            ls ~/project/backend
+
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -315,12 +313,6 @@ jobs:
           at: ~/project
       - restore_cache:
           keys: [backend-build]      
-      - run:
-          name: Check folders
-          command: |
-            ls ~/
-            ls /root/project
-            ls /root/project/backend            
       - run:
           name: Install dependencies
           command: |
