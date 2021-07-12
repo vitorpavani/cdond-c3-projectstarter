@@ -8,9 +8,10 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
-            aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
-            aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
+              echo "destroy environments"
+#       aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --recursive
+#       aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
+#       aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -361,6 +362,7 @@ jobs:
           command: |
             PUBLIC_DNS=$(curl -H "token:${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID})
             echo ${PUBLIC_DNS}
+            echo $(curl -s "http://${PUBLIC_DNS}:3030/api/status")
             if curl -s "http://${PUBLIC_DNS}:3030/api/status" | grep "ok"
             then
               return 0
