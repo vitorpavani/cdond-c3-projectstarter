@@ -153,7 +153,7 @@ jobs:
             ls ~/
             ls ~/project
             ls ~/project/backend
-            apk add --update tar gzip curl
+            apt install -y tar curl
       - run:
           name: Ensure back-end infrastructure exists
           command: |
