@@ -189,6 +189,7 @@ jobs:
           name: Add back-end ip to ansible inventory
           command: |
             echo "$URL" >> .circleci/ansible/inventory.txt
+            cat .circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
@@ -285,10 +286,10 @@ jobs:
           name: Deploy frontend objects
           command: |
             cd frontend
+            npm install webpack-dev-server -g
             npm install
             npm run build
-            aws s3 cp ./frontend/dist s3://udapeople-s3bucket-${CIRCLE_WORKFLOW_ID}/ --recursive
-      # npm install webpack-dev-server -g
+            aws s3 cp ./dist s3://udapeople-s3bucket-${CIRCLE_WORKFLOW_ID}/ --recursive
       # Here's where you will add some code to rollback on failure      
                     
   deploy-backend:
@@ -323,13 +324,20 @@ jobs:
             cd backend
             npm install   
       - run:
+          name: Get the public DNS of EC2 from AWS
+          command: |
+            aws ec2 describe-instances --region ${AWS_DEFAULT_REGION} \
+            --filters 'Name=tag:Name,Values=backend-ec2-*' \
+            --query "Reservations[*].Instances[0].PublicDnsName" \
+            --output text >> .circleci/ansible/inventory.txt
+            cat .circleci/ansible/inventory.txt
+      - run:
           name: Deploy backend
           command: |
             tar -C backend -czvf artifact.tar.gz .
             cd .circleci/ansible
             echo inventory.txt
-            ansible-playbook -i inventory.txt  deploy-backend.yml            
-      # echo $(curl -H "token: ${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}) >> .circleci/ansible/inventory
+            ansible-playbook -i inventory.txt  deploy-backend.yml -l web        
       # Here's where you will add some code to rollback on failure  
 
 #   smoke-test:

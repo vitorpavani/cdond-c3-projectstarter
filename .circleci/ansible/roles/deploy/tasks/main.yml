@@ -24,7 +24,7 @@
     src: /root/project/artifact.tar.gz
     dest: /home/ubuntu/backend/artifact.tar.gz
 
-- name: Uncompress Backend
+- name: Decompress Backend
   shell: |
     cd /home/ubuntu/backend
     tar xvzf artifact.tar.gz -C .
