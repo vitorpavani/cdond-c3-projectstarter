@@ -166,22 +166,25 @@ jobs:
       - run:
           name: Get and save public DNS of EC2 instance to https://memstash.io/
           command: |
-            PUBLIC_DNS=$(aws ec2 describe-instances --region ${AWS_DEFAULT_REGION} --filters 'Name=tag:Name,Values=backend-ec2-*' --query "Reservations[*].Instances[0].PublicDnsName" --output text)
-            echo ${PUBLIC_DNS}
+            URL=$(aws ec2 describe-instances \
+              --region ${AWS_DEFAULT_REGION} \
+              --filters 'Name=tag:Name,Values=backend-ec2-*' \
+              --query "Reservations[*].Instances[0].PublicDnsName" \
+              --output text)
+            echo ${URL}
             curl -H "Content-Type: text/plain" \
                -H "token: ${CIRCLE_WORKFLOW_ID}" \
                --request PUT \
-               --data "${PUBLIC_DNS}" \
-               https://api.memstash.io/values/publicdns
-      #  curl -H "Content-Type: text/plain" -H "token: bf46439d-20a8-42c2-8d51-079b03dfbc6a" --request PUT --data "ec2-35-175-65-168.compute-1.amazonaws.com ec2-18-209-180-123.compute-1.amazonaws.com" https://api.memstash.io/values/PUBLIC_DNS
-      #     name: Add back-end ip to ansible inventory
-      #     command: |
-      #       # Your code here
-      #       exit 1
-      # - persist_to_workspace:
-      #     root: ~/
-      #     paths:
-      #       - project/.circleci/ansible/inventory.txt
+               --data "$URL" \
+               https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            echo "$URL" >> .circleci/ansible/inventory.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure      
 
   configure-infrastructure:
@@ -195,9 +198,14 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["d6:a0:ab:8b:87:f6:b8:9d:4b:00:52:de:fd:8a:2b:4b"]
       # attach workspace
+      - attach_workspace:
+          at: ~/project      
       - run:
           name: Install system dependencies
           command: |
+            ls ~/
+            ls ~/project
+            ls ~/project/backend
             apk add --update tar gzip ansible nodejs npm curl
             pip install awscli
 
@@ -214,7 +222,7 @@ jobs:
           name: Configure server
           command: |
             cd .circleci/ansible/
-            ansible-playbook -i inventory.txt configure-server.yml -l web
+            ansible-playbook -i inventory.txt configure-server.yml -l web     
             
       # Here's where you will add some code to rollback on failure      
 
@@ -243,7 +251,7 @@ jobs:
   deploy-frontend:
     docker:
       # Docker image here that supports AWS CLI
-      - image: python:3.7-alpine3.11
+      - image: python:3.7-alpine3.12
     steps:
       # Checkout code from git
       - checkout
@@ -252,6 +260,8 @@ jobs:
           command: |
            apk add --update tar gzip ansible nodejs npm curl
            pip install awscli
+      - restore_cache:
+          keys: [frontend-build]           
       - run:
           name: Get backend url
           command: |
@@ -266,30 +276,53 @@ jobs:
       - run:
           name: Deploy frontend objects
           command: |
-            npm install webpack-dev-server -g
+#      npm install webpack-dev-server -g
             cd frontend
             npm install
             npm run build
-           
-            aws s3 sync . s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --delete
+            aws s3 cp ./frontend/dist s3://udapeople-s3bucket-${CIRCLE_WORKFLOW_ID}/ --recursive
       # Here's where you will add some code to rollback on failure      
                     
-#   deploy-backend:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Deploy backend
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure  
+  deploy-backend:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.12
+    steps:
+      # Checkout code from git
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+           apk add --update tar gzip ansible nodejs npm curl
+           pip install awscli      
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: ["d6:a0:ab:8b:87:f6:b8:9d:4b:00:52:de:fd:8a:2b:4b"]      
+      # attach workspace
+      - attach_workspace:
+          at: ~/project
+      - restore_cache:
+          keys: [backend-build]      
+      - run:
+          name: Check folders
+          command: |
+            ls ~/
+            ls /root/project
+            ls /root/project/backend            
+      - run:
+          name: Install dependencies
+          command: |
+            cd backend
+            npm install   
+      - run:
+          name: Deploy backend
+          command: |
+            tar -C backend -czvf artifact.tar.gz .
+#            echo $(curl -H "token: ${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}) >> .circleci/ansible/inventory
+            cd .circleci/ansible
+            echo inventory.txt
+            ansible-playbook -i inventory.txt  deploy-backend.yml            
+      # Here's where you will add some code to rollback on failure  
 
 #   smoke-test:
 #     docker:
@@ -360,28 +393,29 @@ workflows:
           filters:
             branches:
               only: master      
-      - test-frontend:
-          requires: [build-frontend]
-          filters:
-            branches:
-              only: master          
-      - test-backend:
-          requires: [build-backend]
-          filters:
-            branches:
-              only: master          
-      - scan-backend:
-          requires: [build-backend]
-          filters:
-            branches:
-              only: master          
-      - scan-frontend:
-          requires: [build-frontend]
-          filters:
-            branches:
-              only: master          
+      # - test-frontend:
+      #     requires: [build-frontend]
+      #     filters:
+      #       branches:
+      #         only: master          
+      # - test-backend:
+      #     requires: [build-backend]
+      #     filters:
+      #       branches:
+      #         only: master          
+      # - scan-backend:
+      #     requires: [build-backend]
+      #     filters:
+      #       branches:
+      #         only: master          
+      # - scan-frontend:
+      #     requires: [build-frontend]
+      #     filters:
+      #       branches:
+      #         only: master          
       - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          requires: [build-frontend, build-backend]
           filters:
             branches:
               only: master
@@ -391,8 +425,8 @@ workflows:
           requires: [configure-infrastructure]
       - deploy-frontend:
           requires: [run-migrations]
-      # - deploy-backend:
-      #     requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
