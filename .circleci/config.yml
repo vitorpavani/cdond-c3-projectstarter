@@ -277,7 +277,7 @@ jobs:
             --filters 'Name=tag:Name,Values=backend-ec2-*' \
             --query "Reservations[*].Instances[0].PublicDnsName" \
             --output text)
-            export API_URL="http://${BACKEND_IP}:3030"
+            export API_URL="https://${BACKEND_IP}:3030"
             echo "API_URL=$API_URL" > frontend/.env
             echo "${API_URL}"
       - run:
