@@ -179,13 +179,14 @@ jobs:
               --output text)
             echo ${URL}
             curl -H "Content-Type: text/plain" \
-               -H "token: ${CIRCLE_WORKFLOW_ID}" \
+               -H "token:${CIRCLE_WORKFLOW_ID}" \
                --request PUT \
                --data "$URL" \
                https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}
       - run:
           name: Add back-end ip to ansible inventory
           command: |
+            URL=$(curl -H "token:${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID})
             echo "$URL" >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
       - persist_to_workspace:
@@ -213,6 +214,7 @@ jobs:
             ls ~/
             ls ~/project
             ls ~/project/backend
+            cat ~/project/.circleci/ansible/inventory.txt
             apk add --update tar gzip ansible nodejs npm curl
             pip install awscli
 
@@ -249,7 +251,7 @@ jobs:
           name: Send migration results to memstash
           command: |
             curl -H "Content-Type: text/plain" \
-               -H "token: ${CIRCLE_WORKFLOW_ID}" \
+               -H "token:${CIRCLE_WORKFLOW_ID}" \
                --request PUT \
                --data "1" \
                https://api.memstash.io/values/migration-${CIRCLE_WORKFLOW_ID}
@@ -331,7 +333,7 @@ jobs:
           command: |
             tar -C backend -czvf artifact.tar.gz .
             cd .circleci/ansible
-            echo inventory.txt
+            cat inventory.txt
             ansible-playbook -i inventory.txt  deploy-backend.yml -l web        
       # Here's where you will add some code to rollback on failure  
 
