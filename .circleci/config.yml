@@ -169,17 +169,19 @@ jobs:
       - run:
           name: Get and save public DNS of EC2 instance to https://memstash.io/
           command: |
-            URL="http://$(aws ec2 describe-instances \
+            BACKEND_API=$(aws ec2 describe-instances \
               --region ${AWS_DEFAULT_REGION}\
               --filters 'Name=tag:Name,Values=backend-ec2-*'\
               --query "Reservations[*].Instances[0].PublicDnsName" \
-              --output text):3030/api/status" 
+              --output text)
+            echo ${BACKEND_API}
+            URL="http://${BACKEND_API:0:-1}:3030/api/status"
             echo ${URL}
             curl -H "Content-Type: text/plain" \
-               -H "token:${CIRCLE_WORKFLOW_ID}" \
-               --request PUT \
-               --data "$URL" \
-               https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}
+              -H "token:${CIRCLE_WORKFLOW_ID}" \
+              --request PUT \
+              --data "$URL" \
+              https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}
       - run:
           name: Add back-end ip to ansible inventory
           command: |
@@ -362,7 +364,7 @@ jobs:
           command: |
             BACKEND=$(curl -H "token:${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID})
             echo ${BACKEND}
-            if curl -s "$BACKEND | grep "ok"
+            if curl -s ${BACKEND} | grep "ok"
             then 
               return 0
             else 
