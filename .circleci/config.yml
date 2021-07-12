@@ -276,11 +276,11 @@ jobs:
       - run:
           name: Deploy frontend objects
           command: |
-#      npm install webpack-dev-server -g
             cd frontend
             npm install
             npm run build
             aws s3 cp ./frontend/dist s3://udapeople-s3bucket-${CIRCLE_WORKFLOW_ID}/ --recursive
+      # npm install webpack-dev-server -g
       # Here's where you will add some code to rollback on failure      
                     
   deploy-backend:
@@ -318,10 +318,10 @@ jobs:
           name: Deploy backend
           command: |
             tar -C backend -czvf artifact.tar.gz .
-#            echo $(curl -H "token: ${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}) >> .circleci/ansible/inventory
             cd .circleci/ansible
             echo inventory.txt
             ansible-playbook -i inventory.txt  deploy-backend.yml            
+      # echo $(curl -H "token: ${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}) >> .circleci/ansible/inventory
       # Here's where you will add some code to rollback on failure  
 
 #   smoke-test:
