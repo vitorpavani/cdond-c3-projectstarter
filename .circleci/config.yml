@@ -356,9 +356,21 @@ jobs:
            apk add --update curl nodejs npm
            pip install awscli
       - run:
-          name: Get backend url
+          name: Get and save public DNS of EC2 instance to https://memstash.io/
           command: |
-            # your code here
+            BACKEND_API=$(aws ec2 describe-instances \
+              --region ${AWS_DEFAULT_REGION}\
+              --filters 'Name=tag:Name,Values=backend-ec2-*'\
+              --query "Reservations[*].Instances[0].PublicDnsName" \
+              --output text)
+            echo ${BACKEND_API}
+            URL="http://${BACKEND_API:0:-1}:3030/api/status"
+            echo ${URL}
+            curl -H "Content-Type: text/plain" \
+              -H "token:${CIRCLE_WORKFLOW_ID}" \
+              --request PUT \
+              --data "$URL" \
+              https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}
       - run:
           name: Backend smoke test.
           command: |
@@ -422,14 +434,14 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend:
-          filters:
-            branches:
-              only: master
-      - build-backend:
-          filters:
-            branches:
-              only: master      
+      # - build-frontend:
+      #     filters:
+      #       branches:
+      #         only: master
+      # - build-backend:
+      #     filters:
+      #       branches:
+      #         only: master      
       # - test-frontend:
       #     requires: [build-frontend]
       #     filters:
@@ -450,22 +462,22 @@ workflows:
       #     filters:
       #       branches:
       #         only: master          
-      - deploy-infrastructure:
-          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          requires: [build-frontend, build-backend]
-          filters:
-            branches:
-              only: master
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
-      - deploy-backend:
-          requires: [run-migrations]
+      # - deploy-infrastructure:
+      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     requires: [build-frontend, build-backend]
+      #     filters:
+      #       branches:
+      #         only: master
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      # - run-migrations:
+      #     requires: [configure-infrastructure]
+      # - deploy-frontend:
+      #     requires: [run-migrations]
+      # - deploy-backend:
+      #     requires: [run-migrations]
       - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+        #  requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
       #     requires: [smoke-test]
       # - cleanup:
