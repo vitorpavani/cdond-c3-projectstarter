@@ -168,7 +168,7 @@ jobs:
           command: |
             export BACKEND_API=$(aws ec2 describe-instances \
               --region ${AWS_DEFAULT_REGION}\
-              --filters 'Name=tag:Name,Values=backend-ec2-$CIRCLE_WORKFLOW_ID'\
+              --filters "Name=tag:Name,Values=backend-ec2-${CIRCLE_WORKFLOW_ID}"\
               --query "Reservations[*].Instances[0].PublicDnsName" \
               --output text)
             echo ${BACKEND_API}
@@ -263,7 +263,7 @@ jobs:
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
               --region ${AWS_DEFAULT_REGION} \
-              --filters 'Name=tag:Name,Values=backend-ec2-$CIRCLE_WORKFLOW_ID' \
+              --filters "Name=tag:Name,Values=backend-ec2-${CIRCLE_WORKFLOW_ID}" \
               --query "Reservations[*].Instances[0].PublicDnsName" \
               --output text)
             export API_URL="http://${BACKEND_IP}:3030"
@@ -313,7 +313,7 @@ jobs:
           name: Get the public DNS of EC2 from AWS
           command: |
             aws ec2 describe-instances --region ${AWS_DEFAULT_REGION} \
-            --filters 'Name=tag:Name,Values=backend-ec2-$CIRCLE_WORKFLOW_ID' \
+            --filters "Name=tag:Name,Values=backend-ec2-${CIRCLE_WORKFLOW_ID}" \
             --query "Reservations[*].Instances[0].PublicDnsName" \
             --output text >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
@@ -344,7 +344,7 @@ jobs:
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
               --region ${AWS_DEFAULT_REGION} \
-              --filters 'Name=tag:Name,Values=backend-ec2-$CIRCLE_WORKFLOW_ID' \
+              --filters "Name=tag:Name,Values=backend-ec2-${CIRCLE_WORKFLOW_ID}" \
               --query "Reservations[*].Instances[0].PublicDnsName" \
               --output text)
             export API_URL="http://${BACKEND_IP}:3030/api/status"
