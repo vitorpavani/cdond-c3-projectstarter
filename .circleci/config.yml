@@ -349,7 +349,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-           apk add --update curl nodejs npm
+           apk add --update tar gzip ansible nodejs npm curl
            pip install awscli
       - run:
           name: Get and save public DNS of EC2 instance to https://memstash.io/
@@ -473,11 +473,11 @@ workflows:
       #     filters:
       #       branches:
       #         only: master
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
-      #     filters:
-      #       branches:
-      #         only: master
+      - run-migrations:
+          requires: [configure-infrastructure]
+          filters:
+            branches:
+              only: master
       # - deploy-frontend:
       #     requires: [run-migrations]
       #     filters:
@@ -489,7 +489,7 @@ workflows:
       #       branches:
       #         only: master
       - smoke-test:
-          # requires: [deploy-backend, deploy-frontend]
+          requires: [run-migrations]
           filters:
             branches:
               only: master
