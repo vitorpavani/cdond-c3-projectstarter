@@ -394,7 +394,7 @@ jobs:
 
             export STACKS=$(aws cloudformation list-stacks \
               --query "StackSummaries[*].StackName" \
-              --stack-status-filter UPDATE_COMPLETE CREATE_COMPLETE --output text) 
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text) 
             echo Stacks: "${STACKS}"
 
             aws cloudformation deploy \
@@ -403,15 +403,15 @@ jobs:
               --stack-name udapeople-cloudfront \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}"          
 
-            # if [[ "${STACKS[@]}" =~ "${OldWorkflowID}"]]
-            # then
-            #   echo "DeleteStacks"
-            #   aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
-            #   aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
-            #   aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
-            # else
-            #   echo "First CloudFront Created"
-            # fi
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            then
+              echo "DeleteStacks"
+              aws s3 rb "s3://udapeople-${OldWorkflowID}" --force 
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+            else
+              echo "First CloudFront Created"
+            fi
       - destroy-environment
       - revert-migrations
       # Here's where you will add some code to rollback on failure  
@@ -438,7 +438,7 @@ jobs:
             export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
                 --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
 
-            if (( "${STACKS[@]}" =~ "${OldWorkflowID}" ));
+            if  [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
               aws s3 rb "s3://udapeople-${OldWorkflowID}" --force 
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
