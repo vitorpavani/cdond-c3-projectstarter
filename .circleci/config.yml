@@ -26,8 +26,8 @@ commands:
             echo ${SUCCESS}
             if (( $SUCCESS == 1 ));
             then
-              cd ~/project/backend
               ls
+              cd backend
               npm install
               npm run migration:revert
             fi
@@ -406,9 +406,9 @@ jobs:
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}"]]
             then
               echo "DeleteStacks"
-              # aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
-              # aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
-              # aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
+              aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
             else
               echo "First CloudFront Created"
             fi
