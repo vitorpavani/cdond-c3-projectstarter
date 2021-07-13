@@ -412,7 +412,7 @@ jobs:
           name: Update cloudfront distribution
           command: |
             export OldWorkflowID=$(aws cloudformation \
-              list-exports --query "Exports[?Name==\'WorkflowID\'].Value" \
+              list-exports --query "Exports[?Name=='WorkflowID'].Value" \
               --no-paginate --output text)
             echo OldWorkflowId: "${OldWorkflowID}"
 
@@ -474,11 +474,11 @@ workflows:
       #     filters:
       #       branches:
       #         only: master
-      - run-migrations:
-          # requires: [configure-infrastructure]
-          filters:
-            branches:
-              only: master
+      # - run-migrations:
+      #     # requires: [configure-infrastructure]
+      #     filters:
+      #       branches:
+      #         only: master
       # - deploy-frontend:
       #     requires: [run-migrations]
       #     filters:
@@ -490,7 +490,7 @@ workflows:
       #       branches:
       #         only: master
       - smoke-test:
-          requires: [run-migrations]
+          # requires: [deploy-frontend, deploy-backend]
           filters:
             branches:
               only: master
