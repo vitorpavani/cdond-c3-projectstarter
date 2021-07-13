@@ -387,7 +387,7 @@ jobs:
           command: |
             URL="http://udapeople-${CIRCLE_WORKFLOW_ID}.s3.amazonaws.com/index.html#/employees"
             echo ${URL}
-            if curl -s ${URL} | grep "Welcome"
+            if (curl -s ${URL}) | grep "Welcome"
             then
               return 1
             else
