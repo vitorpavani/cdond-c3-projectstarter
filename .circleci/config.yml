@@ -21,7 +21,8 @@ commands:
           # Add when this will run
           when: on_fail
           command: |
-            SUCCESS=$(curl -H "token:${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID})
+            SUCCESS=$(curl -H "token:${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/migration-${CIRCLE_WORKFLOW_ID})
+            echo ${SUCCESS}
             if (( $SUCCESS == 1 ));
             then
               cd ~/project/backend
@@ -392,7 +393,7 @@ jobs:
             echo ${URL}
             if (curl -s ${URL}) | grep "Welcome"
             then
-              return 1
+              return 0
             else
               return 1
             fi
