@@ -8,10 +8,9 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-              echo "destroy environments"
-#       aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --recursive
-#       aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
-#       aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
+              aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -356,22 +355,6 @@ jobs:
            apk add --update curl nodejs npm
            pip install awscli
       - run:
-          name: Get and save public DNS of EC2 instance to https://memstash.io/
-          command: |
-            BACKEND_API=$(aws ec2 describe-instances \
-              --region ${AWS_DEFAULT_REGION}\
-              --filters 'Name=tag:Name,Values=backend-ec2-*'\
-              --query "Reservations[*].Instances[0].PublicDnsName" \
-              --output text)
-            echo ${BACKEND_API}
-            URL="http://${BACKEND_API}:3030/api/status"
-            echo ${URL}
-            curl -H "Content-Type: text/plain" \
-              -H "token:${CIRCLE_WORKFLOW_ID}" \
-              --request PUT \
-              --data "$URL" \
-              https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}
-      - run:
           name: Backend smoke test.
           command: |
             BACKEND=$(curl -H "token:${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID})
@@ -385,11 +368,11 @@ jobs:
       - run:
           name: Frontend smoke test
           command: |
-            URL="https://udapeople-e1032b51-1ac3-40a0-bf29-824d363d97cf.s3.amazonaws.com/index.html#/employees"
+            URL="https://udapeople-${CIRCLE_WORKFLOW_ID}.s3.amazonaws.com/index.html#/employees"
             echo ${URL}
             if (curl -s ${URL}) | grep "Welcome"
             then
-              return 0
+              return 1
             else
               return 1
             fi
@@ -434,50 +417,50 @@ jobs:
 workflows:
   default:
     jobs:
-      # - build-frontend:
-      #     filters:
-      #       branches:
-      #         only: master
-      # - build-backend:
-      #     filters:
-      #       branches:
-      #         only: master      
-      # - test-frontend:
-      #     requires: [build-frontend]
-      #     filters:
-      #       branches:
-      #         only: master          
-      # - test-backend:
-      #     requires: [build-backend]
-      #     filters:
-      #       branches:
-      #         only: master          
-      # - scan-backend:
-      #     requires: [build-backend]
-      #     filters:
-      #       branches:
-      #         only: master          
-      # - scan-frontend:
-      #     requires: [build-frontend]
-      #     filters:
-      #       branches:
-      #         only: master          
-      # - deploy-infrastructure:
-      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      #     requires: [build-frontend, build-backend]
-      #     filters:
-      #       branches:
-      #         only: master
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
-      # - deploy-frontend:
-      #     requires: [run-migrations]
-      # - deploy-backend:
-      #     requires: [run-migrations]
+      - build-frontend:
+          filters:
+            branches:
+              only: master
+      - build-backend:
+          filters:
+            branches:
+              only: master      
+      - test-frontend:
+          requires: [build-frontend]
+          filters:
+            branches:
+              only: master          
+      - test-backend:
+          requires: [build-backend]
+          filters:
+            branches:
+              only: master          
+      - scan-backend:
+          requires: [build-backend]
+          filters:
+            branches:
+              only: master          
+      - scan-frontend:
+          requires: [build-frontend]
+          filters:
+            branches:
+              only: master          
+      - deploy-infrastructure:
+          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          requires: [build-frontend, build-backend]
+          filters:
+            branches:
+              only: master
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
       - smoke-test:
-          # requires: [deploy-backend, deploy-frontend]
+          requires: [deploy-backend, deploy-frontend]
           filters:
             branches:
               only: master
