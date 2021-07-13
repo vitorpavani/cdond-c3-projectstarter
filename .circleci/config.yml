@@ -9,9 +9,9 @@ commands:
           when: on_fail
           command: |
             echo destroy environment
-              # aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
-              # aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
-              # aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
+              aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -21,7 +21,7 @@ commands:
           # Add when this will run
           when: on_fail
           command: |
-            SUCCESS=$(curl -H "token:${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/migration-${CIRCLE_WORKFLOW_ID})
+            export SUCCESS=$(curl -H "token:${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/migration-${CIRCLE_WORKFLOW_ID})
             echo ${SUCCESS}
             if (( $SUCCESS == 1 ));
             then
@@ -165,30 +165,19 @@ jobs:
       - run:
           name: Get and save public DNS of EC2 instance to https://memstash.io/
           command: |
-            BACKEND_API=$(aws ec2 describe-instances \
+            export BACKEND_API=$(aws ec2 describe-instances \
               --region ${AWS_DEFAULT_REGION}\
-              --filters 'Name=tag:Name,Values=backend-ec2-*'\
+              --filters 'Name=tag:Name,Values=backend-ec2-${CIRCLE_WORKFLOW_ID}'\
               --query "Reservations[*].Instances[0].PublicDnsName" \
               --output text)
             echo ${BACKEND_API}
-            URL="http://${BACKEND_API}:3030/api/status"
+            export URL="http://${BACKEND_API}:3030/api/status"
             echo ${URL}
             curl -H "Content-Type: text/plain" \
               -H "token:${CIRCLE_WORKFLOW_ID}" \
               --request PUT \
               --data "$URL" \
-              https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}
-      - run:
-          name: Add back-end ip to ansible inventory
-          command: |
-            URL=$(curl -H "token:${CIRCLE_WORKFLOW_ID}" \
-              --request GET https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID})
-            echo "$URL" >> .circleci/ansible/inventory.txt
-            cat .circleci/ansible/inventory.txt
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/ansible/inventory.txt
+              https://api.memstash.io/values/url-${CIRCLE_WORKFLOW_ID}
       - destroy-environment
       - revert-migrations
       # Here's where you will add some code to rollback on failure      
@@ -209,10 +198,6 @@ jobs:
       - run:
           name: Install system dependencies
           command: |
-            ls ~/
-            ls ~/project
-            ls ~/project/backend
-            cat ~/project/.circleci/ansible/inventory.txt
             apk add --update tar gzip ansible nodejs npm curl
             pip install awscli
 
@@ -221,7 +206,7 @@ jobs:
           command: |
             cd .circleci/ansible/
             aws ec2 describe-instances --region ${AWS_DEFAULT_REGION} \
-            --filters 'Name=tag:Name,Values=backend-ec2-*' \
+            --filters 'Name=tag:Name,Values=backend-ec2-${CIRCLE_WORKFLOW_ID}' \
             --query "Reservations[*].Instances[0].PublicDnsName" \
             --output text >> inventory.txt
             cat inventory.txt
@@ -276,10 +261,10 @@ jobs:
           name: Get backend url
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
-            --region ${AWS_DEFAULT_REGION} \
-            --filters 'Name=tag:Name,Values=backend-ec2-*' \
-            --query "Reservations[*].Instances[0].PublicDnsName" \
-            --output text)
+              --region ${AWS_DEFAULT_REGION} \
+              --filters 'Name=tag:Name,Values=backend-ec2-*' \
+              --query "Reservations[*].Instances[0].PublicDnsName" \
+              --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL=$API_URL" > frontend/.env
             echo "${API_URL}"
