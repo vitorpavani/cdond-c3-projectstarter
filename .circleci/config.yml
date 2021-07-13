@@ -8,9 +8,10 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-              aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --recursive --force 
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
+            echo destroy environment
+              # aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
+              # aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
+              # aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -46,7 +47,6 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
-
   build-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -63,7 +63,6 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
-
   test-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -78,9 +77,7 @@ jobs:
           name: Test the code
           command: |
             cd frontend
-            npm run test
-
-                
+            npm run test             
   test-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -95,9 +92,7 @@ jobs:
           name: Test the code
           command: |
             cd backend
-            npm run test
-
-            
+            npm run test      
   scan-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -347,7 +342,6 @@ jobs:
 
   smoke-test:
     docker:
-      # Lightweight Docker image 
       - image: python:3.7-alpine3.12
     steps:
       # Checkout code from git
@@ -358,8 +352,31 @@ jobs:
            apk add --update curl nodejs npm
            pip install awscli
       - run:
+          name: Get and save public DNS of EC2 instance to https://memstash.io/
+          command: |
+            BACKEND_API=$(aws ec2 describe-instances \
+              --region ${AWS_DEFAULT_REGION}\
+              --filters 'Name=tag:Name,Values=backend-ec2-*'\
+              --query "Reservations[*].Instances[0].PublicDnsName" \
+              --output text)
+            echo ${BACKEND_API}
+            URL="http://${BACKEND_API}:3030/api/status"
+            echo ${URL}
+            curl -H "Content-Type: text/plain" \
+              -H "token:${CIRCLE_WORKFLOW_ID}" \
+              --request PUT \
+              --data "$URL" \
+              https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID}
+      - run:
           name: Backend smoke test.
           command: |
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --region ${AWS_DEFAULT_REGION} \
+              --filters 'Name=tag:Name,Values=backend-ec2-*' \
+              --query "Reservations[*].Instances[0].PublicDnsName" \
+              --output text)
+            export API_URL="http://${BACKEND_IP}:3030/api/status"
+            echo ${API_URL}
             BACKEND=$(curl -H "token:${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/publicdns-${CIRCLE_WORKFLOW_ID})
             echo ${BACKEND}
             if (curl -s ${BACKEND}) | grep "ok"
@@ -404,7 +421,7 @@ jobs:
 
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID"]]
             then
-              aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --recursive --force 
+              aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
               aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
             fi
@@ -428,7 +445,7 @@ jobs:
 
               if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
               then
-                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive --force 
+                aws s3 rb "s3://udapeople-${OldWorkflowID}" --force 
                 aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
                 aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
               fi
@@ -436,43 +453,43 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
-      - build-backend  
-      - test-frontend:
-          requires: [build-frontend]       
-      - test-backend:
-          requires: [build-backend]         
-      - scan-backend:
-          requires: [build-backend]      
-      - scan-frontend:
-          requires: [build-frontend]        
-      - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches:
-              only: master
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-          filters:
-            branches:
-              only: master
-      - run-migrations:
-          requires: [configure-infrastructure]
-          filters:
-            branches:
-              only: master
-      - deploy-frontend:
-          requires: [run-migrations]
-          filters:
-            branches:
-              only: master
-      - deploy-backend:
-          requires: [run-migrations]
-          filters:
-            branches:
-              only: master
+      # - build-frontend
+      # - build-backend  
+      # - test-frontend:
+      #     requires: [build-frontend]       
+      # - test-backend:
+      #     requires: [build-backend]         
+      # - scan-backend:
+      #     requires: [build-backend]      
+      # - scan-frontend:
+      #     requires: [build-frontend]        
+      # - deploy-infrastructure:
+      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     filters:
+      #       branches:
+      #         only: master
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      #     filters:
+      #       branches:
+      #         only: master
+      # - run-migrations:
+      #     requires: [configure-infrastructure]
+      #     filters:
+      #       branches:
+      #         only: master
+      # - deploy-frontend:
+      #     requires: [run-migrations]
+      #     filters:
+      #       branches:
+      #         only: master
+      # - deploy-backend:
+      #     requires: [run-migrations]
+      #     filters:
+      #       branches:
+      #         only: master
       - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+          # requires: [deploy-backend, deploy-frontend]
           filters:
             branches:
               only: master
