@@ -474,7 +474,7 @@ workflows:
       #       branches:
       #         only: master
       - run-migrations:
-          requires: [configure-infrastructure]
+          # requires: [configure-infrastructure]
           filters:
             branches:
               only: master
