@@ -417,8 +417,9 @@ jobs:
                 --no-paginate --output text)
             echo OldWorkflowId: "${OldWorkflowID}"
 
-            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-                --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            export STACKS=$(aws cloudformation list-stacks \
+              --query "StackSummaries[*].StackName" \
+              --stack-status-filter UPDATE_COMPLETE CREATE_COMPLETE --output text) 
             echo Stacks: "${STACKS}"
 
             aws cloudformation deploy \
