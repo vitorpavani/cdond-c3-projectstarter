@@ -9,9 +9,9 @@ commands:
           when: on_fail
           command: |
             echo destroy environment
-              # aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
-              # aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
-              # aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
+              aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -426,7 +426,7 @@ jobs:
               --template-file .circleci/files/cloudfront.yml \
               --tags project=udapeople-vitorpavan \
               --stack-name udapeople-cloudfront \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"          
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}"          
 
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}"]]
             then
@@ -479,7 +479,8 @@ workflows:
           requires: [build-frontend]  
 
       - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          requires: [build-frontend, build-backend]
+          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
               only: master
