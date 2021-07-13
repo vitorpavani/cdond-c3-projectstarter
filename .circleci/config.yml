@@ -406,76 +406,80 @@ jobs:
             fi
       # Here's where you will add some code to rollback on failure  
 
-# cleanup:
-#     docker:
-#       # Docker image here
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Get old stack workflow id
-#           command: |
-#             # your code here
-#             export OldWorkflowID="the id here"
-#             export STACKS=[] #put the list of stacks here
-#       - run:
-#           name: Remove old stacks and files
-#           command: |
-#             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-#             then
-#               # your code here
-#             fi
+cleanup:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["d6:a0:ab:8b:87:f6:b8:9d:4b:00:52:de:fd:8a:2b:4b"]      
+      - run:
+          name: Get old stack workflow id and Remove old stacks and files
+          command: |
+            export OldWorkflowID=$(aws cloudformation \
+                list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                --no-paginate --output text)
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+                --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            then
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive)
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            fi
             
 workflows:
   default:
     jobs:
-      - build-frontend:
-          filters:
-            branches:
-              only: master
-      - build-backend:
-          filters:
-            branches:
-              only: master      
+      - build-frontend
+      - build-backend  
       - test-frontend:
-          requires: [build-frontend]
-          filters:
-            branches:
-              only: master          
+          requires: [build-frontend]       
       - test-backend:
-          requires: [build-backend]
-          filters:
-            branches:
-              only: master          
+          requires: [build-backend]         
       - scan-backend:
-          requires: [build-backend]
-          filters:
-            branches:
-              only: master          
+          requires: [build-backend]      
       - scan-frontend:
-          requires: [build-frontend]
-          filters:
-            branches:
-              only: master          
+          requires: [build-frontend]        
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          # requires: [build-frontend, build-backend]
           filters:
             branches:
               only: master
       - configure-infrastructure:
           requires: [deploy-infrastructure]
+          filters:
+            branches:
+              only: master
       - run-migrations:
           requires: [configure-infrastructure]
+          filters:
+            branches:
+              only: master
       - deploy-frontend:
           requires: [run-migrations]
+          filters:
+            branches:
+              only: master
       - deploy-backend:
           requires: [run-migrations]
+          filters:
+            branches:
+              only: master
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
           filters:
             branches:
               only: master
+
       - cloudfront-update:
           requires: [smoke-test]
-      # - cleanup:
-      #     requires: [cloudfront-update]
+          filters:
+            branches:
+              only: master
+      - cleanup:
+          requires: [cloudfront-update]
+          filters:
+            branches:
+              only: master
