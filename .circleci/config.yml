@@ -403,15 +403,15 @@ jobs:
               --stack-name udapeople-cloudfront \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}"          
 
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}"]]
-            then
-              echo "DeleteStacks"
-              aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
-            else
-              echo "First CloudFront Created"
-            fi
+            # if [[ "${STACKS[@]}" =~ "${OldWorkflowID}"]]
+            # then
+            #   echo "DeleteStacks"
+            #   aws s3 rb "s3://udapeople-${CIRCLE_WORKFLOW_ID}" --force 
+            #   aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}"
+            #   aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}"
+            # else
+            #   echo "First CloudFront Created"
+            # fi
       - destroy-environment
       - revert-migrations
       # Here's where you will add some code to rollback on failure  
