@@ -154,7 +154,7 @@ jobs:
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople-vitorpavan \
               --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID} \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}"  
       - run:
           name: Ensure front-end infrastructure exist
           command: |
@@ -162,7 +162,7 @@ jobs:
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople-vitorpavan \
               --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID} \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}"  
       - run:
           name: Get and save public DNS of EC2 instance to https://memstash.io/
           command: |
@@ -435,15 +435,20 @@ jobs:
             export OldWorkflowID=$(aws cloudformation \
                 list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
                 --no-paginate --output text)
-            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-                --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            export STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+                --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
 
-            # if  [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-            # then
-            #   aws s3 rb "s3://udapeople-${OldWorkflowID}" --force 
-            #   aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-            #   aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
-            # fi
+            echo Old Workflow Id: "${OldWorkflowID}"
+            echo Current Workflow Id: "${CIRCLE_WORKFLOW_ID}"
+            echo STACKS: "$STACKS" 
+
+            if [ -n "${OldWorkflowID}" ]
+            then
+              echo "s3://udapeople-${OldWorkflowID}"
+              aws s3 rb "s3://udapeople-${OldWorkflowID}" --force
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+            fi
             
 workflows:
   default:
