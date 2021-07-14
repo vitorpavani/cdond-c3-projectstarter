@@ -442,13 +442,13 @@ jobs:
             echo Current Workflow Id: "${CIRCLE_WORKFLOW_ID}"
             echo STACKS: "$STACKS" 
 
-            if [ -n "${OldWorkflowID}" ]
-            then
-              echo "s3://udapeople-${OldWorkflowID}"
-              aws s3 rb "s3://udapeople-${OldWorkflowID}" --force
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-            fi
+            # if [ -n "${OldWorkflowID}" ]
+            # then
+            #   echo "s3://udapeople-${OldWorkflowID}"
+            #   aws s3 rb "s3://udapeople-${OldWorkflowID}" --force
+            #   aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            #   aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+            # fi
             
 workflows:
   default:
