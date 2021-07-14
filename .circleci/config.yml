@@ -154,7 +154,7 @@ jobs:
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople-vitorpavan \
               --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID} \
-              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}"  
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
       - run:
           name: Ensure front-end infrastructure exist
           command: |
@@ -162,7 +162,7 @@ jobs:
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople-vitorpavan \
               --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID} \
-              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}"  
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
       - run:
           name: Get and save public DNS of EC2 instance to https://memstash.io/
           command: |
