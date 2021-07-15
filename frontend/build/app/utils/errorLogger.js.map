@@ -1,0 +1,1 @@
+{"version":3,"file":"errorLogger.js","sourceRoot":"","sources":["../../../src/app/utils/errorLogger.ts"],"names":[],"mappings":"AAIA,MAAM,UAAU,QAAQ,CAAC,KAAY,EAAE,IAAS;IAC9C,IAAI;QACF,SAAS,CAAC,IAAI,CAAC,EAAE,KAAK,OAAA,EAAE,IAAI,MAAA,EAAE,CAAC,CAAC;KACjC;IAAC,OAAO,IAAI,EAAE;QACb,OAAO;KACR;AACH,CAAC"}
