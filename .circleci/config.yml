@@ -222,10 +222,15 @@ jobs:
 
   run-migrations:
     docker:
-      - image: circleci/node:13.8.0
+      - image: python:3.7-alpine3.12
     steps:
       # Checkout code from git
       - checkout
+      - run:
+          name: Install dependencies
+          command: |
+           apk add --update tar gzip curl
+           pip install awscli
       - run:
           name: Run migrations
           command: |
@@ -259,7 +264,7 @@ jobs:
       - restore_cache:
           keys: [frontend-build]           
       - run:
-          name: Get backend url
+          name: Get backend url | Deploy frontend objects
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
               --region ${AWS_DEFAULT_REGION} \
@@ -269,9 +274,7 @@ jobs:
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL=$API_URL" > frontend/.env
             echo "${API_URL}"
-      - run:
-          name: Deploy frontend objects
-          command: |
+            cat frontend/.env
             cd frontend
             npm install webpack-dev-server -g
             npm install
