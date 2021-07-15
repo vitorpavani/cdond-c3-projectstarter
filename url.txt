@@ -1,5 +1,5 @@
 1- https://github.com/vitorpavani/cdond-c3-projectstarter
-2- http://udapeople-2425a9bd-efea-40ee-8114-edddec03b4a5.s3-website-us-east-1.amazonaws.com/#/employees
+2- http://udapeople-b12615cf-d265-442b-869b-7c2e7dd020c9.s3-website-us-east-1.amazonaws.com/#/employees
 3- https://d3hmjy1ula8ya4.cloudfront.net/#/employees
-4- http://ec2-3-83-238-153.compute-1.amazonaws.com:3030/api/status
-5- http://ec2-100-26-148-47.compute-1.amazonaws.com:9090/
+4- http://ec2-52-91-133-173.compute-1.amazonaws.com:3030/api/status
+5- http://ec2-3-92-152-204.compute-1.amazonaws.com:9090/
