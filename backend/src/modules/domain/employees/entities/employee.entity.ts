@@ -62,10 +62,10 @@ export class Employee extends AggregateRoot<number> {
   public personalEmail: string;
 
   @Column({ nullable: true })
-  public birthdate: string;
+  public birthdate: Date;
 
   @Column()
-  public startDate: string;
+  public startDate: Date;
 
   @Column({ length: 200, nullable: true })
   public address: string;
@@ -95,7 +95,7 @@ export class Employee extends AggregateRoot<number> {
   public city: string;
 
   @Column()
-  public effectiveDate: string;
+  public effectiveDate: Date;
 
   @Column('decimal')
   public salary: number;
@@ -120,7 +120,7 @@ export enum SalaryType {
   HOURLY = 'hourly',
 }
 
-export function getDateFromString(date: string): string {
+export function getDateFromString(date: string): Date {
   return moment(date).format('M/D/YYYY');
 }
 
